@@ -1,6 +1,10 @@
 #screen{
-    width: 400px;
-    height: 400px;
+    position: relative;   
+    width: 500px;
+    height: 500px;
     color: #00a0fa;
     background-color: black;
+}
+.img{
+    position: absolute;
 }
