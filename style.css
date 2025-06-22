@@ -4,6 +4,7 @@
     height: 500px;
     color: #00a0fa;
     background-color: black;
+    transition: 0.2s;
 }
 .img{
     position: absolute;
