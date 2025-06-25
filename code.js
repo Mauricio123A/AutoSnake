@@ -2,6 +2,8 @@ const pixelScale = 20; // px
 const amountOfSnakes = 4;
 const snakes = []; // scale, color, lookingTo, positions, score
 const initialSnakeScale = 2; // +head
+const initialOrientation = "up"; // not finished
+const fruits = []; // not finished
 const tickTime = 500; // miliseconds
 const screen = document.getElementById("screen");
 const pointsPerKill = 1000;
@@ -23,24 +25,32 @@ function randomSnakeHeadPosition(){
 };
 function buildSnakes(){
     for (let i = 0; i < amountOfSnakes; i++) {
-        let color = 360/amountOfSnakes*(i+1); // custom color different for each snake
+        let snakeColor = 360/amountOfSnakes*(i+1); // custom color different for each snake
         
-        let position;
+        let positions, headPositionX, headPositionY;
         if (randomMap == false){
-            position = [initialSnakeHeadPosition(i)];
-            headPositionX = position[0][0];
-            headPositionY = position[0][1];
+            [headPositionX,headPositionY] = initialSnakeHeadPosition(i);
+            positions = [[headPositionX,headPositionY]];
+
+            drawSnakeHead(headPositionX,headPositionY,snakeColor,"up"); // draw head
+
+            for (let x = 0; x < initialSnakeScale; x++){
+                let bodyPartPositionY = headPositionY+pixelScale*(x+1);
+                positions.push([headPositionX,bodyPartPositionY]);
+                drawSnakeBody(headPositionX,bodyPartPositionY,snakeColor);
+            };
         }else{
             randomSnakeHeadPosition();
         };
 
-        drawSnakeHead(headPositionX,headPositionY,color,"up"); // drawhead
-        for (let x = 0; x < initialSnakeScale; x++){
-            let bodyPartPositionY = headPositionY+pixelScale*(x+1);
-            position.push([headPositionX,bodyPartPositionY]);
-            drawSnakeBody(headPositionX,bodyPartPositionY,color);
-        };
-        snakes.push([initialSnakeScale,color,"up",position,0]);
+        const thisSnake = {
+            scale:initialSnakeScale,
+            color:snakeColor,
+            orientation: initialOrientation,
+            position:positions,
+            score:0
+        }
+        snakes.push(thisSnake)
     }
     console.log("Snakes created:", snakes);
 };
@@ -93,9 +103,9 @@ function drawSnakeBody(posX,posY,color){
 
 function snakeMovement(){
     for(let i = 0; i<snakes.length; i++){
-        lookTo = snakes[i][2]
-        let positions = snakes[i][3]
-        for(let x = snakes[i][3].length-1; x>0; x--){
+        lookTo = snakes[i].orientation;
+        let positions = snakes[i].position
+        for(let x = positions.length-1; x>0; x--){
             positions[x] = [...positions[x-1]]
         }
         switch (lookTo){
@@ -130,14 +140,14 @@ function snakeDeaths(diedSnakesInTick){ // death: out of borders, touching his o
     // death
     const toKill = new Set(); // sets dont repeat the elements
     for(let i = 0; i < snakes.length; i++){ //out of borders
-        if (snakes[i][3][0][0] > screenWidth || snakes[i][3][0][0] < 0 || snakes[i][3][0][1] > screenHeight || snakes[i][3][0][1] < 0){
+        if (snakes[i].position[0][0] > screenWidth || snakes[i].position[0][0] < 0 || snakes[i].position[0][1] > screenHeight || snakes[i].position[0][1] < 0){
             toKill.add(i);
             diedSnakesInTick.push(snakes[i]);
         };
     };
     for(let i = 0; i < snakes.length; i++){ // touching his own body
-        for(let x = 1; x < snakes[i][0]; x++){
-            if (snakes[i][3][0][0] == snakes[i][3][x][0] && snakes[i][3][0][1] == snakes[i][3][x][1]){
+        for(let x = 1; x < snakes[i].scale; x++){
+            if (snakes[i].position[0][0] == snakes[i].position[x][0] && snakes[i].position[0][1] == snakes[i].position[x][1]){
                 toKill.add(i);
                 diedSnakesInTick.push(snakes[i]);
             };
@@ -145,17 +155,17 @@ function snakeDeaths(diedSnakesInTick){ // death: out of borders, touching his o
     };
     for(let i = 0; i < snakes.length; i++){ // touching another snake
         for(let x = i+1; x < snakes.length; x++){
-            if(snakes[i][3][0][0] == snakes[x][3][0][0] && snakes[i][3][0][1] == snakes[x][3][0][1]){ // head colisions
+            if(snakes[i].position[0][0] == snakes[x].position[0][0] && snakes[i].position[0][1] == snakes[x].position[0][1]){ // head colisions
                 toKill.add(i);
                 toKill.add(x);
                 diedSnakesInTick.push(snakes[i]);
                 diedSnakesInTick.push(snakes[x]);
             };
-            for(let z = 1; z <= snakes[x][0]; z++){ // head with other snake
-                if(snakes[i][3][0][0] == snakes[x][3][z][0] && snakes[i][3][0][1] == snakes[x][3][z][1]){
+            for(let z = 1; z <= snakes[x].scale; z++){ // head with other snake
+                if(snakes[i].position[0][0] == snakes[x].position[z][0] && snakes[i].position[0][1] == snakes[x].position[z][1]){
                     toKill.add(i);
                     diedSnakesInTick.push(snakes[i]);
-                    snakes[x][4] += pointsPerKill; // points for killing a snake
+                    snakes[x].score += pointsPerKill; // points for killing a snake
                 };
             };
         };
@@ -184,9 +194,9 @@ function gameEjecution(){ // main control
     //Draw frame
     screen.innerHTML = "";
     for(let i = 0; i < snakes.length; i++){
-        drawSnakeHead(snakes[i][3][0][0],snakes[i][3][0][1],snakes[i][1],snakes[i][2])
-        for(let x = 1; x <= snakes[i][0]; x++){
-            drawSnakeBody(snakes[i][3][x][0],snakes[i][3][x][1],snakes[i][1])
+        drawSnakeHead(snakes[i].position[0][0],snakes[i].position[0][1],snakes[i].color,snakes[i].orientation)
+        for(let x = 1; x <= snakes[i].scale; x++){
+            drawSnakeBody(snakes[i].position[x][0],snakes[i].position[x][1],snakes[i].color)
         }
     }
 
