@@ -12,12 +12,14 @@ const fruitsPosibles = ["img/Fruits/apple.png","img/Fruits/banana.png",
                 "img/Fruits/strawberry.png", "img/Fruits/watermelon.png"]; // not finished
 const tickTime = 250; // miliseconds
 const screen = document.getElementById("screen");
+const ejecutionButton = document.getElementById("");
 const pointsPerKill = 1000;
 const pointsPerEat = 100;
-const randomMap = false
+const randomMap = false;
 const screenWidth = screen.clientWidth;
 const screenHeight = screen.clientHeight;
 const totalPixels = screenHeight * screenWidth;
+let ejecution;
 
 function getEmptySpaces(){
     let empty = [];
@@ -102,7 +104,7 @@ function buildSnakes(){
     };
 };
 function snakeVision(snake){
-    
+
 };
 
 function drawSnakeHead(posX,posY,color,lookTo){
@@ -153,7 +155,7 @@ function drawSnakeBody(posX,posY,color){
 
 function drawFruit(address,posX,posY){
     const fr = document.createElement("img");
-    fr.className = "img";
+    fr.className = "img fruit";
 
     fr.src = address;
     fr.style.width = pixelScale + "px";
@@ -292,8 +294,17 @@ function gameEjecution(){ // main control
     diedSnakesInTick = [];
     //clearInterval(ejecution)
 };
+
 function playSimulation(){
     buildSnakes(); // prepare snakes
     ejecution = setInterval(gameEjecution, tickTime); // ejecution every tick
-}
+};
+
+let paused = false;
+function pause(){
+
+};
+function resume(){
+
+};
 playSimulation();
