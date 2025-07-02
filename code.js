@@ -1,6 +1,8 @@
 const pixelScale = 20; // px
 const amountOfSnakes = 3;
 const snakes = []; // scale, color, lookingTo, positions, score, fruit, nextFrameAddBodyPosition
+const history = []; // snakes
+const deathSnakes = []; // History of death
 const fruits = []; // adress, position
 const initialSnakeScale = 2; // +head
 const initialOrientation = "up"; // not finished
@@ -12,14 +14,36 @@ const fruitsPosibles = ["img/Fruits/apple.png","img/Fruits/banana.png",
                 "img/Fruits/strawberry.png", "img/Fruits/watermelon.png"]; // not finished
 const tickTime = 250; // miliseconds
 const screen = document.getElementById("screen");
-const ejecutionButton = document.getElementById("");
+const ejecutionButton = document.getElementById("ejecutionControlButton");
+const stopButton = document.getElementById("stopEjecutionButton");
+const startButton = document.getElementById("startGameButton");
+const winnerText = document.getElementById("winner");
 const pointsPerKill = 1000;
 const pointsPerEat = 100;
 const randomMap = false;
 const screenWidth = screen.clientWidth;
 const screenHeight = screen.clientHeight;
-const totalPixels = screenHeight * screenWidth;
+const totalPixels = screenHeight * screenWidth; 
+let diedSnakesInTick = []; // manage deaths
 let ejecution;
+let paused = false;
+let isRunning = false;
+if(isRunning){
+    stopButton.style.display = "block";
+    startButton.style.display = "none";
+    ejecutionButton.style.display = "block";
+}else{
+    stopButton.style.display = "none";
+    startButton.style.display = "block";
+    ejecutionButton.style.display = "none";
+};
+
+if(paused){
+    ejecutionButton.children[0].src = "img/pause.png";
+}else{
+    ejecutionButton.children[0].src = "img/resume.png";
+};
+
 
 function getEmptySpaces(){
     let empty = [];
@@ -193,6 +217,7 @@ function snakeMovement(){ // moves every snake to the direction the snake has in
 
 function snakeDied(toKill){ // kills a provided array of snakes
     while(toKill.length > 0){
+        deathSnakes.push(snakes[toKill[toKill.length-1]]);
         snakes.splice(toKill[toKill.length-1],1); // kills the snake
         toKill.splice(toKill.length-1,1); // takes off the dead snake
     };
@@ -265,12 +290,16 @@ function snakeMind(){ // control the snake
 
 };
 function winComprobation(){ // last snake wins
-
+    if(snakes.length == 1){
+        winSimulation(false, snakes[0]); // send winner
+    };
+    if(snakes.length == 0){
+        winSimulation(true, diedSnakesInTick); // send winners
+    }
 };
 function gameEjecution(){ // main control
     snakeMovement();
 
-    let diedSnakesInTick = []; // manage deaths
     snakeDied(snakeDeaths(diedSnakesInTick));
 
     snakeEating();
@@ -294,17 +323,72 @@ function gameEjecution(){ // main control
     diedSnakesInTick = [];
     //clearInterval(ejecution)
 };
+function endSimulation(){
+    clearInterval(ejecution)
+    let historyOfThisGame = [];
+    historyOfThisGame.push[deathSnakes];
+    stopButton.style.display = "none";
+    startButton.style.display = "block";
+    ejecutionButton.style.display = "none";
+    paused = false;
+    ejecutionButton.children[0].src = "img/resume.png";
+    isRunning = false;
+    snakes.length = 0;
+    fruits.length = 0;
+    deathSnakes.length = 0;
+    diedSnakesInTick.length = 0;
+}
+function winSimulation(twoOrMore, winner){
+    console.log("End");
+    if(twoOrMore){
+        if(winner.length == 2){
+            winnerText.innerHTML = "It's a Tie between " + winner[0].shortName + " and " + winner[1].shortName + "!";
+        }else{
+            let text = "It's a Tie between ";
+            for(let i = 0; i < winner.length; i++){
+                if(i == winner.length-1){
+                    text = text + " and " + winner[i].shortName + "!";
+                }else if(i == 0){
+                    text = text + winner[i].shortName;
+                }else{
+                    text = text + ", " + winner[i].shortName;
+                };
+            };
+            winnerText.innerHTML = text;
+        };
+    }else{
+        winnerText.innerHTML = "The snake " + winner.shortName + " won the Game!";
+    };
 
+    endSimulation();
+}
 function playSimulation(){
+    if(isRunning){
+        return
+    }
+    winnerText.innerHTML = "";
+    screen.innerHTML = "";
+    stopButton.style.display = "block";
+    startButton.style.display = "none";
+    ejecutionButton.style.display = "block";
+    isRunning = true;
     buildSnakes(); // prepare snakes
     ejecution = setInterval(gameEjecution, tickTime); // ejecution every tick
 };
 
-let paused = false;
-function pause(){
-
+ejecutionButton.onclick = () => {
+    paused = !paused;
+    if(paused){
+        ejecutionButton.children[0].src = "img/pause.png"
+        clearInterval(ejecution)
+    }else{
+        ejecutionButton.children[0].src = "img/resume.png"
+        ejecution = setInterval(gameEjecution, tickTime);
+    }
 };
-function resume(){
-
-};
-playSimulation();
+stopButton.onclick = () => {
+    endSimulation();
+}
+startButton.onclick = () => {
+    playSimulation();
+}
